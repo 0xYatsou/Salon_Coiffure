@@ -53,3 +53,12 @@ export function getTokenFromHeaders(headers: Headers): string | null {
     }
     return authHeader.substring(7);
 }
+
+/**
+ * Vérifie l'authentification dans une requête API
+ */
+export async function verifyAuth(request: Request): Promise<JWTPayload | null> {
+    const token = getTokenFromHeaders(request.headers);
+    if (!token) return null;
+    return verifyToken(token);
+}

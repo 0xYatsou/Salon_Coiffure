@@ -9,6 +9,7 @@ import {
     LogOut,
     Menu,
     X,
+    MessageSquare,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -25,15 +26,28 @@ export default function AdminLayout({
 
     useEffect(() => {
         // Vérifier l'authentification
-        const token = localStorage.getItem("adminToken");
+        const checkAuth = () => {
+            try {
+                const token = localStorage.getItem("adminToken");
+                console.log("AdminLayout: Check Auth, Token exists?", !!token);
 
-        if (!token && pathname !== "/admin/login") {
-            router.push("/admin/login");
-        } else if (token) {
-            setIsAuthenticated(true);
-        }
+                if (!token) {
+                    if (pathname !== "/admin/login") {
+                        console.log("AdminLayout: No token, redirecting to login");
+                        router.replace("/admin/login");
+                    }
+                } else {
+                    console.log("AdminLayout: Token found, setting authenticated");
+                    setIsAuthenticated(true);
+                }
+            } catch (error) {
+                console.error("AdminLayout: Error reading token", error);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-        setLoading(false);
+        checkAuth();
     }, [pathname, router]);
 
     const handleLogout = () => {
@@ -78,6 +92,11 @@ export default function AdminLayout({
             name: "Services",
             href: "/admin/services",
             icon: Scissors,
+        },
+        {
+            name: "Commentaires",
+            href: "/admin/reviews",
+            icon: MessageSquare,
         },
     ];
 

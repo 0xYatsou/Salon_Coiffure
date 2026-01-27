@@ -247,7 +247,7 @@ export default function BookingPage() {
     }
 
     return (
-        <div className="min-h-screen bg-primary-50 py-12">
+        <div className="min-h-screen bg-primary-50 dark:bg-primary-950 py-12">
             <div className="container-custom max-w-4xl">
                 <h1 className="font-serif text-4xl font-bold text-center mb-8">Réserver un rendez-vous</h1>
 
@@ -284,8 +284,8 @@ export default function BookingPage() {
                                             setStep(2);
                                         }}
                                         className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${selectedService?.id === service.id
-                                                ? "border-primary-900 bg-primary-50"
-                                                : "border-primary-200 hover:border-primary-400"
+                                            ? "border-primary-900 bg-primary-50"
+                                            : "border-primary-200 hover:border-primary-400"
                                             }`}
                                     >
                                         <div className="flex justify-between items-start">
@@ -339,40 +339,72 @@ export default function BookingPage() {
 
                             {/* Calendar Grid */}
                             <div className="mb-8">
-                                <h3 className="font-bold mb-4">Date</h3>
+                                <h3 className="font-bold mb-4 font-serif text-xl">Sélectionnez une date</h3>
 
                                 {/* Day headers */}
-                                <div className="grid grid-cols-7 gap-2 mb-2">
-                                    {['lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.', 'dim.'].map((day) => (
-                                        <div key={day} className="text-center text-sm font-medium text-primary-600">
+                                <div className="grid grid-cols-7 gap-1 md:gap-2 mb-2">
+                                    {['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'].map((day) => (
+                                        <div key={day} className="text-center text-xs font-medium text-primary-500 uppercase tracking-wider">
                                             {day}
                                         </div>
                                     ))}
                                 </div>
 
                                 {/* Calendar days */}
-                                <div className="grid grid-cols-7 gap-2">
+                                <div className="grid grid-cols-7 gap-1 md:gap-2">
                                     {calendarDays.map((day, index) => {
                                         const isSelected = selectedDate?.toDateString() === day.date.toDateString();
                                         const isDisabled = day.isPast || day.isSunday || !day.isCurrentMonth;
 
+                                        // Highlight today
+                                        const isToday = new Date().toDateString() === day.date.toDateString();
+
                                         return (
                                             <button
                                                 key={index}
-                                                onClick={() => handleDateSelect(day)}
+                                                onClick={() => {
+                                                    handleDateSelect(day);
+                                                    // Petit délai pour laisser le temps au state de se mettre à jour
+                                                    setTimeout(() => {
+                                                        document.getElementById('time-slots')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                                    }, 100);
+                                                }}
                                                 disabled={isDisabled}
                                                 className={`
-                                                    p-3 rounded-lg border-2 text-center transition-all
-                                                    ${!day.isCurrentMonth ? 'opacity-30' : ''}
-                                                    ${day.isSunday ? 'bg-gray-100 border-gray-200 cursor-not-allowed text-gray-400' : ''}
-                                                    ${day.isPast && !day.isSunday ? 'bg-gray-50 border-gray-200 cursor-not-allowed text-gray-400' : ''}
-                                                    ${!isDisabled && !isSelected ? 'border-primary-200 hover:border-primary-400 hover:bg-primary-50' : ''}
-                                                    ${isSelected ? 'border-primary-900 bg-primary-900 text-white' : ''}
+                                                    relative aspect-square flex flex-col items-center justify-center p-1 rounded-xl border transition-all text-sm
+                                                    ${!day.isCurrentMonth ? 'opacity-0 pointer-events-none' : ''}
+                                                    
+                                                    /* Disabled state */
+                                                    ${isDisabled && day.isCurrentMonth
+                                                        ? 'bg-gray-50 dark:bg-primary-900/50 border-gray-100 dark:border-primary-800 text-gray-300 dark:text-primary-700 cursor-not-allowed'
+                                                        : ''}
+                                                    
+                                                    /* Default available state */
+                                                    ${!isDisabled && !isSelected
+                                                        ? 'bg-white dark:bg-primary-800 border-primary-100 dark:border-primary-700 hover:border-primary-400 dark:hover:border-primary-500 hover:bg-primary-50 dark:hover:bg-primary-700 text-primary-700 dark:text-primary-200 shadow-sm'
+                                                        : ''}
+                                                    
+                                                    /* Selected state */
+                                                    ${isSelected
+                                                        ? 'bg-primary-900 dark:bg-accent border-primary-900 dark:border-accent text-white dark:text-primary-950 shadow-md transform scale-105 z-10'
+                                                        : ''}
+                                                    
+                                                    /* Today highlight */
+                                                    ${isToday && !isSelected ? 'ring-2 ring-accent ring-offset-2 dark:ring-offset-primary-900' : ''}
                                                 `}
                                             >
-                                                <div className="text-xs">{formatDayShort(day.date)}</div>
-                                                <div className="font-bold">{formatDayNumber(day.date)}</div>
-                                                <div className="text-xs">{formatMonthShort(day.date)}</div>
+                                                <span className={`text-[10px] uppercase font-bold ${isSelected ? 'text-primary-200 dark:text-primary-800' : 'text-primary-400 dark:text-primary-500'}`}>
+                                                    {formatDayShort(day.date).replace('.', '')}
+                                                </span>
+                                                <span className={`text-lg font-bold leading-none mt-1 ${isSelected ? 'text-white dark:text-primary-950' : 'text-primary-900 dark:text-white'}`}>
+                                                    {formatDayNumber(day.date)}
+                                                </span>
+                                                {/* Dots for availability */}
+                                                {!isDisabled && !isSelected && (
+                                                    <div className="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-0.5">
+                                                        <div className="w-1 h-1 rounded-full bg-green-400 dark:bg-green-500"></div>
+                                                    </div>
+                                                )}
                                             </button>
                                         );
                                     })}
@@ -381,37 +413,49 @@ export default function BookingPage() {
 
                             {/* Time Selection */}
                             {selectedDate && (
-                                <div>
-                                    <h3 className="font-bold mb-4">Heure</h3>
+                                <div id="time-slots" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                    <h3 className="font-bold mb-4 font-serif text-xl border-t pt-6 mt-6">
+                                        Horaires disponibles
+                                    </h3>
 
                                     {loadingSlots ? (
-                                        <div className="flex items-center justify-center py-8">
-                                            <Loader2 className="w-8 h-8 animate-spin text-accent" />
-                                            <span className="ml-3 text-primary-600">Chargement des créneaux...</span>
+                                        <div className="flex flex-col items-center justify-center py-12 bg-white dark:bg-primary-800 rounded-xl border border-primary-100 dark:border-primary-700">
+                                            <Loader2 className="w-8 h-8 animate-spin text-accent mb-2" />
+                                            <span className="text-primary-500 dark:text-primary-400 text-sm">Recherche des disponibilités...</span>
                                         </div>
                                     ) : availableSlots.length === 0 ? (
-                                        <div className="text-center py-8 bg-yellow-50 rounded-lg border border-yellow-200">
-                                            <AlertCircle className="w-12 h-12 text-yellow-600 mx-auto mb-3" />
-                                            <p className="text-yellow-800 font-medium">Aucun créneau disponible</p>
-                                            <p className="text-yellow-600 text-sm mt-1">Veuillez choisir une autre date</p>
+                                        <div className="text-center py-8 bg-orange-50 dark:bg-orange-900/20 rounded-xl border border-orange-100 dark:border-orange-800/50 p-6">
+                                            <AlertCircle className="w-10 h-10 text-orange-400 mx-auto mb-3" />
+                                            <p className="text-orange-800 dark:text-orange-200 font-bold mb-1">Complet</p>
+                                            <p className="text-orange-600 dark:text-orange-300 text-sm">Veuillez choisir une autre date.</p>
                                         </div>
                                     ) : (
-                                        <div className="grid grid-cols-4 md:grid-cols-6 gap-2">
-                                            {availableSlots.map((time) => (
-                                                <button
-                                                    key={time}
-                                                    onClick={() => {
-                                                        setSelectedTime(time);
-                                                        setStep(3);
-                                                    }}
-                                                    className={`p-3 rounded-lg border-2 transition-colors ${selectedTime === time
-                                                            ? "border-primary-900 bg-primary-900 text-white"
-                                                            : "border-green-200 bg-green-50 hover:border-green-400 hover:bg-green-100 text-green-800"
-                                                        }`}
-                                                >
-                                                    {time}
-                                                </button>
-                                            ))}
+                                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
+                                            {availableSlots.map((timeStr) => {
+                                                // Extract just the time HH:mm from the full ISO string if needed
+                                                // L'API renvoie parfois une date complète ou juste l'heure, assurons-nous d'avoir HH:mm
+                                                const timeDisplay = timeStr.includes('T') ? timeStr.split('T')[1].substring(0, 5) : timeStr;
+
+                                                return (
+                                                    <button
+                                                        key={timeStr}
+                                                        onClick={() => {
+                                                            setSelectedTime(timeDisplay); // On garde le format simple pour l'affichage et l'état
+                                                            setStep(3);
+                                                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                                                        }}
+                                                        className={`
+                                                        py-3 px-2 rounded-lg border text-sm font-semibold transition-all relative overflow-hidden group
+                                                        ${selectedTime === timeDisplay
+                                                                ? "border-primary-900 bg-primary-900 dark:bg-accent dark:border-accent text-white dark:text-primary-950 shadow-lg scale-105"
+                                                                : "bg-white dark:bg-primary-800 border-primary-200 dark:border-primary-700 text-primary-700 dark:text-primary-200 hover:border-primary-900 dark:hover:border-accent hover:text-primary-900 dark:hover:text-accent hover:shadow-md"
+                                                            }
+                                                    `}
+                                                    >
+                                                        {timeDisplay}
+                                                    </button>
+                                                )
+                                            })}
                                         </div>
                                     )}
                                 </div>

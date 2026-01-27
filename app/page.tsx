@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Calendar, Clock } from "lucide-react";
 import { motion } from "framer-motion";
+import ReviewsGrid from "@/components/ReviewsGrid";
 
 export default function HomePage() {
     return (
@@ -29,21 +30,13 @@ export default function HomePage() {
                         <p className="text-xl md:text-2xl mb-8 text-primary-100 max-w-2xl mx-auto drop-shadow-md">
                             Expérience premium, service d'excellence
                         </p>
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                            <Link href="/booking" className="btn-accent inline-flex items-center gap-2">
-                                <Calendar className="w-5 h-5" />
-                                Réserver en ligne
-                            </Link>
-                            <Link href="/services" className="btn-secondary bg-white/10 border-white hover:bg-white/20 backdrop-blur-sm">
-                                Nos prestations
-                            </Link>
-                        </div>
+
                     </motion.div>
                 </div>
             </section>
 
             {/* Services Preview */}
-            <section className="py-20 bg-white">
+            <section className="py-20 bg-white dark:bg-primary-950">
                 <div className="container-custom">
                     <div className="text-center mb-16">
                         <h2 className="font-serif text-4xl md:text-5xl font-bold mb-4">Nos Prestations</h2>
@@ -76,34 +69,35 @@ export default function HomePage() {
                                 image: "/images/service-complet.png",
                             },
                         ].map((service, index) => (
-                            <motion.div
-                                key={service.title}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.1 }}
-                                viewport={{ once: true }}
-                                className="group overflow-hidden rounded-xl bg-white shadow-md hover:shadow-xl transition-all duration-300"
-                            >
-                                <div className="relative h-48 overflow-hidden">
-                                    <img
-                                        src={service.image}
-                                        alt={service.title}
-                                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                                    />
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-                                </div>
-                                <div className="p-6">
-                                    <h3 className="font-serif text-2xl font-bold mb-2">{service.title}</h3>
-                                    <p className="text-primary-600 mb-4">{service.description}</p>
-                                    <div className="flex justify-between items-center pt-4 border-t border-primary-100">
-                                        <span className="text-2xl font-bold text-accent">{service.price}</span>
-                                        <span className="text-sm text-primary-500 flex items-center gap-1">
-                                            <Clock className="w-4 h-4" />
-                                            {service.duration}
-                                        </span>
+                            <Link href="/booking" key={service.title} className="block">
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    transition={{ delay: index * 0.1 }}
+                                    viewport={{ once: true }}
+                                    className="group overflow-hidden rounded-xl bg-white dark:bg-primary-900 shadow-md hover:shadow-xl dark:shadow-none dark:border dark:border-primary-800 transition-all duration-300 cursor-pointer"
+                                >
+                                    <div className="relative h-48 overflow-hidden">
+                                        <img
+                                            src={service.image}
+                                            alt={service.title}
+                                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                        />
+                                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
                                     </div>
-                                </div>
-                            </motion.div>
+                                    <div className="p-6">
+                                        <h3 className="font-serif text-2xl font-bold mb-2 text-primary-900 dark:text-white">{service.title}</h3>
+                                        <p className="text-primary-600 dark:text-primary-300 mb-4">{service.description}</p>
+                                        <div className="flex justify-between items-center pt-4 border-t border-primary-100">
+                                            <span className="text-2xl font-bold text-accent">{service.price}</span>
+                                            <span className="text-sm text-primary-500 dark:text-primary-400 flex items-center gap-1">
+                                                <Clock className="w-4 h-4" />
+                                                {service.duration}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            </Link>
                         ))}
                     </div>
 
@@ -115,11 +109,27 @@ export default function HomePage() {
                 </div>
             </section>
 
+            {/* Reviews Section */}
+            <section className="py-20 bg-primary-50 dark:bg-primary-900/30">
+                <div className="container-custom">
+                    <div className="text-center mb-16">
+                        <h2 className="font-serif text-4xl md:text-5xl font-bold mb-4">Avis Clients</h2>
+                        <p className="text-primary-600 dark:text-primary-400 text-lg max-w-2xl mx-auto">
+                            Ce que nos clients disent de nous
+                        </p>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-8">
+                        <ReviewsGrid />
+                    </div>
+                </div>
+            </section>
+
             {/* CTA Section */}
-            <section className="py-20 bg-primary-50">
+            <section className="py-20 bg-primary-50 dark:bg-primary-900/50">
                 <div className="container-custom text-center">
-                    <h2 className="font-serif text-4xl font-bold mb-6">Prêt à prendre rendez-vous ?</h2>
-                    <p className="text-xl text-primary-600 mb-8 max-w-2xl mx-auto">
+                    <h2 className="font-serif text-4xl font-bold mb-6 text-primary-900 dark:text-white">Prêt à prendre rendez-vous ?</h2>
+                    <p className="text-xl text-primary-600 dark:text-primary-300 mb-8 max-w-2xl mx-auto">
                         Réservez votre créneau en quelques clics
                     </p>
                     <Link href="/booking" className="btn-accent inline-flex items-center gap-2">

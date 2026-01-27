@@ -54,3 +54,4 @@ debug-slots.ts
 show-services.ts
 test-api.mjs
 test-api.js
+.env*.local

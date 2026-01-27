@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Calendar, Users, Scissors, TrendingUp } from "lucide-react";
+import { Calendar, Users, Scissors, TrendingUp, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -10,6 +10,7 @@ interface Stats {
     todayBookings: number;
     totalClients: number;
     totalServices: number;
+    pendingReviews?: number;
 }
 
 interface RecentBooking {
@@ -98,6 +99,12 @@ export default function AdminDashboard() {
             value: stats.totalServices,
             icon: Scissors,
             color: "bg-accent",
+        },
+        {
+            title: "Avis en attente",
+            value: stats.pendingReviews || 0,
+            icon: MessageSquare,
+            color: "bg-yellow-500",
         },
     ];
 

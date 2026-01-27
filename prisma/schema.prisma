@@ -106,3 +106,14 @@ model ClosedDay {
   reason      String?
   createdAt   DateTime @default(now())
 }
+
+// Table des avis clients
+model Review {
+  id          String   @id @default(uuid())
+  name        String
+  rating      Int      // 1 à 5
+  comment     String   @db.Text
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

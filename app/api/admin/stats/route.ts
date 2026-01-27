@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
 
-        const [totalBookings, todayBookings, totalClients, totalServices] = await Promise.all([
+        const [totalBookings, todayBookings, totalClients, totalServices, pendingReviews] = await Promise.all([
             prisma.booking.count(),
             prisma.booking.count({
                 where: {
@@ -44,6 +44,9 @@ export async function GET(request: NextRequest) {
             }),
             prisma.client.count(),
             prisma.service.count(),
+            prisma.review.count({
+                where: { isPublished: false }
+            }),
         ]);
 
         return NextResponse.json({
@@ -51,6 +54,7 @@ export async function GET(request: NextRequest) {
             todayBookings,
             totalClients,
             totalServices,
+            pendingReviews,
         });
     } catch (error) {
         console.error('Error fetching stats:', error);

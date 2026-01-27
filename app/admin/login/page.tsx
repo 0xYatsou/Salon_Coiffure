@@ -32,8 +32,8 @@ export default function AdminLoginPage() {
             // Stocker le token
             localStorage.setItem("adminToken", data.token);
 
-            // Rediriger vers le dashboard
-            router.push("/admin/dashboard");
+            // Rediriger vers le dashboard (Hard reload pour s'assurer que le layout le voit bien)
+            window.location.href = "/admin/dashboard";
         } catch (err: any) {
             setError(err.message || "Erreur de connexion");
         } finally {
