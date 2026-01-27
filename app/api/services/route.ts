@@ -1,87 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { verifyToken } from '@/lib/auth';
 
-/**
- * GET /api/services - Récupère tous les services
- */
-export async function GET(request: NextRequest) {
-    try {
-        // Si authentifié, retourner tous les services, sinon seulement les actifs
-        const authHeader = request.headers.get('authorization');
-        let whereClause = {};
-
-        if (!authHeader) {
-            whereClause = { isActive: true };
-        }
-
-        const services = await prisma.service.findMany({
-            where: whereClause,
-            orderBy: {
-                order: 'asc',
-            },
-        });
-
-        return NextResponse.json(services);
-    } catch (error) {
-        console.error('Error fetching services:', error);
-        return NextResponse.json(
-            { error: 'Erreur lors de la récupération des services' },
-            { status: 500 }
-        );
+// Mock data pour la démo
+const mockServices = [
+    {
+        id: "s1",
+        name: "Coupe Homme",
+        description: "Coupe aux ciseaux et/ou tondeuse, finitions soignées, coiffage.",
+        price: 35,
+        duration: 30,
+        image: "/images/service-coupe.png"
+    },
+    {
+        id: "s2",
+        name: "Barbe & Soins",
+        description: "Taille de barbe experte, contours au rasoir, serviette chaude et soins hydratants.",
+        price: 25,
+        duration: 20,
+        image: "/images/service-barbe.png"
+    },
+    {
+        id: "s3",
+        name: "Coupe + Barbe",
+        description: "Le combo parfait : coupe de cheveux et entretien de la barbe pour un look impeccable.",
+        price: 55,
+        duration: 50,
+        image: "/images/service-complet.png"
+    },
+    {
+        id: "s4",
+        name: "Coloration",
+        description: "Coloration discrète pour camoufler les cheveux blancs ou changer de style.",
+        price: 45,
+        duration: 60,
+        image: "/images/service-coloration.png"
+    },
+    {
+        id: "s5",
+        name: "Soins Visage",
+        description: "Gommage, masque et massage du visage pour une peau revitalisée.",
+        price: 30,
+        duration: 30,
+        image: "/images/hero-banner.png"
     }
+];
+
+export async function GET(request: NextRequest) {
+    // Mode Démo : Renvoie toujours les données mockées
+    return NextResponse.json(mockServices);
 }
 
-/**
- * POST /api/services - Crée un nouveau service (Admin only)
- */
 export async function POST(request: NextRequest) {
-    try {
-        // Vérifier l'authentification
-        const authHeader = request.headers.get('authorization');
-        if (!authHeader) {
-            return NextResponse.json(
-                { error: 'Non autorisé' },
-                { status: 401 }
-            );
-        }
-
-        const token = authHeader.replace('Bearer ', '');
-        const decoded = verifyToken(token);
-
-        if (!decoded) {
-            return NextResponse.json(
-                { error: 'Token invalide' },
-                { status: 401 }
-            );
-        }
-
-        const body = await request.json();
-        const { name, description, price, duration, active } = body;
-
-        if (!name || !description || price === undefined || !duration) {
-            return NextResponse.json(
-                { error: 'Données manquantes' },
-                { status: 400 }
-            );
-        }
-
-        const service = await prisma.service.create({
-            data: {
-                name,
-                description,
-                price: parseFloat(price),
-                duration: parseInt(duration),
-                isActive: active !== undefined ? active : true,
-            },
-        });
-
-        return NextResponse.json(service, { status: 201 });
-    } catch (error) {
-        console.error('Error creating service:', error);
-        return NextResponse.json(
-            { error: 'Erreur lors de la création du service' },
-            { status: 500 }
-        );
-    }
+    return NextResponse.json({ message: "Mode démo : Création simulée" }, { status: 201 });
 }
