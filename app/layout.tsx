@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Playfair_Display } from "next/font/google";
 import "./globals.css";
-import { ThemeProvider } from "@/lib/theme-context";
-import { Navbar } from "@/components/Navbar";
+import { ClientProviders } from "@/components/ClientProviders";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -35,12 +34,9 @@ export default function RootLayout({
     return (
         <html lang="fr" className={`${inter.variable} ${playfair.variable}`} suppressHydrationWarning>
             <body className="font-sans bg-white dark:bg-primary-950 text-primary-900 dark:text-white transition-colors">
-                <ThemeProvider>
-                    <Navbar />
-                    <div className="pt-16">
-                        {children}
-                    </div>
-                </ThemeProvider>
+                <ClientProviders>
+                    {children}
+                </ClientProviders>
             </body>
         </html>
     );
