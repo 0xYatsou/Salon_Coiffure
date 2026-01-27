@@ -84,10 +84,15 @@ async function seedTestBookings() {
                 const bookingDate = new Date(date);
                 bookingDate.setHours(hours, minutes, 0, 0);
 
+                // Calculer l'heure de fin
+                const endTime = new Date(bookingDate);
+                endTime.setMinutes(bookingDate.getMinutes() + service.duration);
+
                 bookingsToCreate.push({
                     clientId: client.id,
                     serviceId: service.id,
                     date: bookingDate,
+                    endTime: endTime,
                     status: 'CONFIRMED'
                 });
             }
