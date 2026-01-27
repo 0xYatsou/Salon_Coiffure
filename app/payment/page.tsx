@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { CreditCard, Lock, CheckCircle, AlertCircle } from "lucide-react";
@@ -8,7 +8,7 @@ import Link from "next/link";
 
 type PaymentStep = "details" | "processing" | "success" | "error";
 
-export default function PaymentPage() {
+function PaymentContent() {
     const searchParams = useSearchParams();
     const [step, setStep] = useState<PaymentStep>("details");
     const [formData, setFormData] = useState({
@@ -273,5 +273,19 @@ export default function PaymentPage() {
                 </div>
             </div>
         </main>
+    );
+}
+
+export default function PaymentPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-primary-50 dark:bg-primary-950">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-accent mx-auto mb-6" />
+                </div>
+            </div>
+        }>
+            <PaymentContent />
+        </Suspense>
     );
 }
