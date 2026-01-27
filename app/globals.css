@@ -1,0 +1,120 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --background: 0 0% 100%;
+        --foreground: 20 14.3% 4.1%;
+    }
+
+    .dark {
+        --background: 20 14.3% 4.1%;
+        --foreground: 0 0% 100%;
+    }
+
+    * {
+        @apply border-primary-200 dark:border-primary-700;
+    }
+
+    body {
+        @apply bg-white dark:bg-primary-950 text-primary-900 dark:text-white antialiased transition-colors duration-300;
+    }
+
+    /* Smooth scroll */
+    html {
+        scroll-behavior: smooth;
+    }
+}
+
+@layer components {
+
+    /* Boutons */
+    .btn-primary {
+        @apply bg-primary-900 dark:bg-primary-100 text-white dark:text-primary-900 px-6 py-3 rounded-lg font-medium hover:bg-primary-800 dark:hover:bg-white transition-colors shadow-md hover:shadow-lg;
+    }
+
+    .btn-secondary {
+        @apply bg-white dark:bg-primary-800 text-primary-900 dark:text-white border-2 border-primary-900 dark:border-primary-600 px-6 py-3 rounded-lg font-medium hover:bg-primary-50 dark:hover:bg-primary-700 transition-colors;
+    }
+
+    .btn-accent {
+        @apply bg-accent text-white px-6 py-3 rounded-lg font-medium hover:bg-accent-dark transition-all shadow-md hover:shadow-lg hover:scale-105 active:scale-100;
+    }
+
+    /* Cards */
+    .card {
+        @apply bg-white dark:bg-primary-900 rounded-xl shadow-sm dark:shadow-none border border-primary-100 dark:border-primary-800 p-6 transition-all;
+    }
+
+    /* Inputs */
+    .input {
+        @apply w-full px-4 py-3 rounded-lg border border-primary-200 dark:border-primary-700 bg-white dark:bg-primary-800 text-primary-900 dark:text-white placeholder-primary-400 dark:placeholder-primary-500 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-colors;
+    }
+
+    /* Container */
+    .container-custom {
+        @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+    }
+
+    /* Glass effect */
+    .glass {
+        @apply bg-white/80 dark:bg-primary-900/80 backdrop-blur-lg;
+    }
+
+    /* Gradient text */
+    .gradient-text {
+        @apply bg-gradient-to-r from-accent to-accent-dark bg-clip-text text-transparent;
+    }
+
+    /* Hover lift effect */
+    .hover-lift {
+        @apply transition-transform duration-300 hover:-translate-y-1;
+    }
+
+    /* Glow effect */
+    .glow {
+        @apply shadow-[0_0_20px_rgba(196, 164, 132, 0.3)] dark:shadow-[0_0_20px_rgba(196, 164, 132, 0.2)];
+    }
+}
+
+@layer utilities {
+    .text-balance {
+        text-wrap: balance;
+    }
+
+    /* Animation delays */
+    .animation-delay-100 {
+        animation-delay: 100ms;
+    }
+
+    .animation-delay-200 {
+        animation-delay: 200ms;
+    }
+
+    .animation-delay-300 {
+        animation-delay: 300ms;
+    }
+
+    .animation-delay-500 {
+        animation-delay: 500ms;
+    }
+
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        @apply bg-primary-100 dark:bg-primary-900;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        @apply bg-primary-300 dark:bg-primary-700 rounded-full;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        @apply bg-primary-400 dark:bg-primary-600;
+    }
+}
