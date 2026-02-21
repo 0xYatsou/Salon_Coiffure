@@ -56,9 +56,25 @@ export function getTokenFromHeaders(headers: Headers): string | null {
 
 /**
  * Vérifie l'authentification dans une requête API
+ * Checks: 1) auth-token cookie, 2) Authorization Bearer header
  */
 export async function verifyAuth(request: Request): Promise<JWTPayload | null> {
-    const token = getTokenFromHeaders(request.headers);
+    // Try cookie first (parse Cookie header manually since plain Request has no .cookies)
+    const cookieHeader = request.headers.get('cookie') || '';
+    const cookies = Object.fromEntries(
+        cookieHeader.split(';').map(c => {
+            const [key, ...val] = c.trim().split('=');
+            return [key, val.join('=')];
+        })
+    );
+    const cookieToken = cookies['auth-token'];
+
+    // Fallback to Authorization header
+    const headerToken = getTokenFromHeaders(request.headers);
+
+    const token = cookieToken || headerToken;
     if (!token) return null;
+
     return verifyToken(token);
 }
+

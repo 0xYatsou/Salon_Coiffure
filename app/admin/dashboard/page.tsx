@@ -43,30 +43,29 @@ export default function AdminDashboard() {
 
     const fetchDashboardData = async () => {
         try {
-            const token = localStorage.getItem("adminToken");
-
-            // Fetch stats
+            // Cookie HttpOnly envoyé auto — plus besoin de localStorage !
             const statsResponse = await fetch("/api/admin/stats", {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+                credentials: 'include',
             });
 
             if (statsResponse.ok) {
                 const statsData = await statsResponse.json();
                 setStats(statsData);
+            } else if (statsResponse.status === 401) {
+                // Token cookie expired or invalid
+                window.location.href = "/admin/login";
+                return;
             }
 
             // Fetch recent bookings
             const bookingsResponse = await fetch("/api/bookings?limit=5", {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+                credentials: 'include',
             });
 
             if (bookingsResponse.ok) {
                 const bookingsData = await bookingsResponse.json();
-                setRecentBookings(bookingsData);
+                // Handle both shapes: paginated {bookings, pagination} or raw array
+                setRecentBookings(bookingsData.bookings || bookingsData);
             }
         } catch (error) {
             console.error("Error fetching dashboard data:", error);
@@ -124,12 +123,12 @@ export default function AdminDashboard() {
                     Tableau de bord
                 </h1>
                 <p className="text-primary-600 mt-1">
-                    Vue d'ensemble de votre salon
+                    Vue d&apos;ensemble de votre salon
                 </p>
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                 {statCards.map((stat) => (
                     <div
                         key={stat.title}
@@ -213,10 +212,12 @@ export default function AdminDashboard() {
                                                 ${booking.status === 'confirmed' ? 'bg-green-100 text-green-800' : ''}
                                                 ${booking.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : ''}
                                                 ${booking.status === 'cancelled' ? 'bg-red-100 text-red-800' : ''}
+                                                ${booking.status === 'completed' ? 'bg-blue-100 text-blue-800' : ''}
                                             `}>
                                                 {booking.status === 'confirmed' && 'Confirmé'}
                                                 {booking.status === 'pending' && 'En attente'}
                                                 {booking.status === 'cancelled' && 'Annulé'}
+                                                {booking.status === 'completed' && 'Terminé'}
                                             </span>
                                         </td>
                                     </tr>

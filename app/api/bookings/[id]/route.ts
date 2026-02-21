@@ -10,16 +10,18 @@ export async function PATCH(
     { params }: { params: { id: string } }
 ) {
     try {
-        // Vérifier l'authentification
-        const authHeader = request.headers.get('authorization');
-        if (!authHeader) {
+        // Vérifier l'authentification (cookie first, header fallback)
+        const token =
+            request.cookies.get('auth-token')?.value ||
+            request.headers.get('authorization')?.replace('Bearer ', '');
+
+        if (!token) {
             return NextResponse.json(
                 { error: 'Non autorisé' },
                 { status: 401 }
             );
         }
 
-        const token = authHeader.replace('Bearer ', '');
         const decoded = verifyToken(token);
 
         if (!decoded) {
@@ -69,16 +71,18 @@ export async function DELETE(
     { params }: { params: { id: string } }
 ) {
     try {
-        // Vérifier l'authentification
-        const authHeader = request.headers.get('authorization');
-        if (!authHeader) {
+        // Vérifier l'authentification (cookie first, header fallback)
+        const token =
+            request.cookies.get('auth-token')?.value ||
+            request.headers.get('authorization')?.replace('Bearer ', '');
+
+        if (!token) {
             return NextResponse.json(
                 { error: 'Non autorisé' },
                 { status: 401 }
             );
         }
 
-        const token = authHeader.replace('Bearer ', '');
         const decoded = verifyToken(token);
 
         if (!decoded) {

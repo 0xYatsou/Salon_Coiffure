@@ -46,7 +46,6 @@ export default function ServicesPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        const token = localStorage.getItem("adminToken");
         const url = editingService
             ? `/api/services/${editingService.id}`
             : "/api/services";
@@ -57,8 +56,8 @@ export default function ServicesPage() {
                 method,
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
                 },
+                credentials: 'include',
                 body: JSON.stringify({
                     ...formData,
                     price: parseFloat(formData.price),
@@ -84,12 +83,9 @@ export default function ServicesPage() {
         }
 
         try {
-            const token = localStorage.getItem("adminToken");
             const response = await fetch(`/api/services/${id}`, {
                 method: "DELETE",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+                credentials: 'include',
             });
 
             if (response.ok) {

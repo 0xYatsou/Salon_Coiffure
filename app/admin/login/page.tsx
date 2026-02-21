@@ -21,6 +21,7 @@ export default function AdminLoginPage() {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email, password }),
+                credentials: 'include', // important for cookies
             });
 
             const data = await response.json();
@@ -29,10 +30,10 @@ export default function AdminLoginPage() {
                 throw new Error(data.error || "Erreur de connexion");
             }
 
-            // Stocker le token
-            localStorage.setItem("adminToken", data.token);
+            // Le cookie HttpOnly est automatiquement set par le browser via Set-Cookie
+            // Plus besoin de localStorage !
 
-            // Rediriger vers le dashboard (Hard reload pour s'assurer que le layout le voit bien)
+            // Rediriger vers le dashboard
             window.location.href = "/admin/dashboard";
         } catch (err: any) {
             setError(err.message || "Erreur de connexion");

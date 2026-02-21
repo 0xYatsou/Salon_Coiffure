@@ -32,11 +32,8 @@ export default function AdminReviews() {
 
     const fetchReviews = async () => {
         try {
-            const token = localStorage.getItem("adminToken");
             const response = await fetch("/api/admin/reviews", {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+                credentials: 'include',
             });
 
             if (response.ok) {
@@ -53,13 +50,12 @@ export default function AdminReviews() {
     const togglePublish = async (id: string, currentStatus: boolean) => {
         setActionLoading(id);
         try {
-            const token = localStorage.getItem("adminToken");
             const response = await fetch("/api/admin/reviews", {
                 method: "PATCH",
                 headers: {
                     "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
                 },
+                credentials: 'include',
                 body: JSON.stringify({ id, isPublished: !currentStatus }),
             });
 
@@ -80,12 +76,9 @@ export default function AdminReviews() {
 
         setActionLoading(id);
         try {
-            const token = localStorage.getItem("adminToken");
             const response = await fetch(`/api/admin/reviews?id=${id}`, {
                 method: "DELETE",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+                credentials: 'include',
             });
 
             if (response.ok) {

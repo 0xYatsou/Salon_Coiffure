@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { rateLimit } from "@/lib/rate-limit";
 
 const prisma = new PrismaClient();
 
@@ -22,6 +23,10 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+    // Rate limit: 3 reviews per hour per IP
+    const limitResponse = await rateLimit(request, { limit: 3, windowMs: 60 * 60 * 1000 });
+    if (limitResponse) return limitResponse;
+
     try {
         const body = await request.json();
         const { name, rating, comment } = body;

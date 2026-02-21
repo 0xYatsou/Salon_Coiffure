@@ -25,34 +25,30 @@ export default function AdminLayout({
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     useEffect(() => {
-        // Vérifier l'authentification
-        const checkAuth = () => {
-            try {
-                const token = localStorage.getItem("adminToken");
-                console.log("AdminLayout: Check Auth, Token exists?", !!token);
+        // Le middleware gère déjà la protection côté serveur.
+        // Ici on fait un quick check côté client pour le UX (redirect si cookie absent)
+        if (pathname === '/admin/login') {
+            setLoading(false);
+            return;
+        }
 
-                if (!token) {
-                    if (pathname !== "/admin/login") {
-                        console.log("AdminLayout: No token, redirecting to login");
-                        router.replace("/admin/login");
-                    }
-                } else {
-                    console.log("AdminLayout: Token found, setting authenticated");
+        // Test auth by pinging a protected endpoint
+        fetch('/api/admin/stats', { credentials: 'include' })
+            .then(res => {
+                if (res.ok) {
                     setIsAuthenticated(true);
+                } else {
+                    router.replace('/admin/login');
                 }
-            } catch (error) {
-                console.error("AdminLayout: Error reading token", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        checkAuth();
+            })
+            .catch(() => router.replace('/admin/login'))
+            .finally(() => setLoading(false));
     }, [pathname, router]);
 
-    const handleLogout = () => {
-        localStorage.removeItem("adminToken");
-        router.push("/admin/login");
+    const handleLogout = async () => {
+        // Clear the HttpOnly cookie via API
+        await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' });
+        window.location.href = '/admin/login';
     };
 
     // Si on est sur la page de login, pas de layout

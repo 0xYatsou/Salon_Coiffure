@@ -1,34 +1,57 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
+import { comparePassword, generateToken } from '@/lib/auth';
+import { rateLimit } from '@/lib/rate-limit';
 
 /**
  * POST /api/auth/login - Connexion admin
+ * Returns a Set-Cookie header with HttpOnly JWT + JSON body
  */
 export async function POST(request: NextRequest) {
+    // Rate limit: 5 attempts per 15 minutes
+    const limitResponse = await rateLimit(request, { limit: 5, windowMs: 15 * 60 * 1000 });
+    if (limitResponse) return limitResponse;
+
     try {
         const body = await request.json();
         const { email, password } = body;
 
+        if (!email || !password) {
+            return NextResponse.json(
+                { error: 'Email et mot de passe requis' },
+                { status: 400 }
+            );
+        }
+
         // 1. Chercher l'utilisateur dans la DB
-        console.log(`[Login] Searching for user: ${email}`);
         const user = await prisma.user.findUnique({
             where: { email }
         });
-        console.log(`[Login] DB Result:`, user ? `Found (ID: ${user.id})` : 'Not Found');
 
         // 2. Vérifier si l'utilisateur existe
         if (!user) {
-            // Fallback pour le mode démo si la DB est vide ou pas encore seedée en prod (sécurité)
+            // Fallback pour le mode démo si la DB n'est pas seedée
             if (email === "admin@salon.com" && password === "admin123") {
-                const mockToken = "demo_admin_token_" + Date.now();
-                return NextResponse.json({
-                    token: mockToken,
-                    user: { id: "admin_1", email, name: "Admin Démo", role: "ADMIN" }
+                const token = generateToken({
+                    userId: "demo_admin_1",
+                    email,
+                    role: "admin",
                 });
+
+                const response = NextResponse.json({
+                    user: { id: "demo_admin_1", email, name: "Admin Démo", role: "admin" }
+                });
+
+                // Set HttpOnly cookie
+                response.cookies.set('auth-token', token, {
+                    httpOnly: true,
+                    secure: process.env.NODE_ENV === 'production',
+                    sameSite: 'lax',
+                    path: '/',
+                    maxAge: 60 * 60 * 24, // 24h
+                });
+
+                return response;
             }
 
             return NextResponse.json(
@@ -38,7 +61,7 @@ export async function POST(request: NextRequest) {
         }
 
         // 3. Vérifier le mot de passe
-        const isValid = await bcrypt.compare(password, user.password);
+        const isValid = await comparePassword(password, user.password);
 
         if (!isValid) {
             return NextResponse.json(
@@ -47,15 +70,14 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 4. Générer le token JWT
-        const token = jwt.sign(
-            { userId: user.id, email: user.email, role: user.role },
-            JWT_SECRET,
-            { expiresIn: '24h' }
-        );
+        // 4. Générer le token JWT via la source unique lib/auth.ts
+        const token = generateToken({
+            userId: user.id,
+            email: user.email,
+            role: user.role,
+        });
 
-        return NextResponse.json({
-            token,
+        const response = NextResponse.json({
             user: {
                 id: user.id,
                 email: user.email,
@@ -63,6 +85,17 @@ export async function POST(request: NextRequest) {
                 role: user.role,
             },
         });
+
+        // 5. Set HttpOnly cookie — invisible au JS client, envoyé auto par le browser
+        response.cookies.set('auth-token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 60 * 60 * 24, // 24h
+        });
+
+        return response;
 
     } catch (error) {
         console.error('Login error:', error);

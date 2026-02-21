@@ -38,6 +38,8 @@ const statusConfig = {
     completed: { label: "Terminé", color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400" },
 };
 
+const ITEMS_PER_PAGE_OPTIONS = [10, 20, 50];
+
 export default function AdminBookingsPage() {
     const [bookings, setBookings] = useState<Booking[]>([]);
     const [loading, setLoading] = useState(true);
@@ -47,56 +49,49 @@ export default function AdminBookingsPage() {
     const [showModal, setShowModal] = useState(false);
     const [currentWeek, setCurrentWeek] = useState(new Date());
 
-    // Mock data
-    useEffect(() => {
-        const mockBookings: Booking[] = [
-            {
-                id: "1",
-                date: "2026-01-27T10:00:00",
-                client: { id: "c1", name: "Jean Dupont", phone: "06 12 34 56 78", email: "jean@email.com" },
-                service: { id: "s1", name: "Coupe Homme", price: 35, duration: 30 },
-                status: "confirmed",
-                createdAt: "2026-01-25T14:00:00",
-            },
-            {
-                id: "2",
-                date: "2026-01-27T11:00:00",
-                client: { id: "c2", name: "Pierre Martin", phone: "06 98 76 54 32", email: "pierre@email.com" },
-                service: { id: "s2", name: "Barbe & Soins", price: 25, duration: 20 },
-                status: "pending",
-                createdAt: "2026-01-26T09:00:00",
-            },
-            {
-                id: "3",
-                date: "2026-01-27T14:00:00",
-                client: { id: "c3", name: "Thomas Leroy", phone: "06 11 22 33 44", email: "thomas@email.com" },
-                service: { id: "s3", name: "Coupe + Barbe", price: 55, duration: 50 },
-                status: "confirmed",
-                createdAt: "2026-01-24T16:30:00",
-            },
-            {
-                id: "4",
-                date: "2026-01-28T09:30:00",
-                client: { id: "c4", name: "Marc Bernard", phone: "06 55 66 77 88", email: "marc@email.com" },
-                service: { id: "s1", name: "Coupe Homme", price: 35, duration: 30 },
-                status: "cancelled",
-                createdAt: "2026-01-25T10:00:00",
-            },
-            {
-                id: "5",
-                date: "2026-01-28T15:00:00",
-                client: { id: "c5", name: "Nicolas Petit", phone: "06 99 88 77 66", email: "nicolas@email.com" },
-                service: { id: "s4", name: "Coloration", price: 45, duration: 60 },
-                status: "confirmed",
-                createdAt: "2026-01-26T11:00:00",
-            },
-        ];
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+    const [itemsPerPage, setItemsPerPage] = useState(20);
 
-        setTimeout(() => {
-            setBookings(mockBookings);
+    // Fetch real bookings from DB
+    useEffect(() => {
+        fetchBookings();
+    }, [currentPage, itemsPerPage, statusFilter]);
+
+    const fetchBookings = async () => {
+        setLoading(true);
+        try {
+            const params = new URLSearchParams({
+                page: currentPage.toString(),
+                limit: itemsPerPage.toString(),
+            });
+            if (statusFilter !== "all") {
+                params.set('status', statusFilter);
+            }
+
+            const response = await fetch(`/api/bookings?${params}`, {
+                credentials: 'include',
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setBookings(data.bookings || []);
+                if (data.pagination) {
+                    setTotalPages(data.pagination.totalPages || 1);
+                    setTotalItems(data.pagination.total || 0);
+                }
+            } else if (response.status === 401) {
+                window.location.href = "/admin/login";
+            }
+        } catch (error) {
+            console.error("Error fetching bookings:", error);
+            showToast({ type: "error", title: "Erreur", description: "Impossible de charger les réservations" });
+        } finally {
             setLoading(false);
-        }, 500);
-    }, []);
+        }
+    };
 
     const filteredBookings = bookings.filter((booking) => {
         const matchesSearch =
@@ -110,16 +105,46 @@ export default function AdminBookingsPage() {
     });
 
     const handleStatusChange = async (bookingId: string, newStatus: Booking["status"]) => {
-        setBookings(prev =>
-            prev.map(b => b.id === bookingId ? { ...b, status: newStatus } : b)
-        );
-        showToast({ type: "success", title: "Statut mis à jour", description: `Réservation ${statusConfig[newStatus].label.toLowerCase()}` });
+        try {
+            const response = await fetch(`/api/bookings/${bookingId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                credentials: 'include',
+                body: JSON.stringify({ status: newStatus }),
+            });
+
+            if (response.ok) {
+                setBookings(prev =>
+                    prev.map(b => b.id === bookingId ? { ...b, status: newStatus } : b)
+                );
+                showToast({ type: "success", title: "Statut mis à jour", description: `Réservation ${statusConfig[newStatus].label.toLowerCase()}` });
+            } else {
+                showToast({ type: "error", title: "Erreur", description: "Impossible de mettre à jour le statut" });
+            }
+        } catch (error) {
+            console.error("Error updating booking:", error);
+            showToast({ type: "error", title: "Erreur", description: "Erreur réseau" });
+        }
     };
 
     const handleDelete = async (bookingId: string) => {
         if (confirm("Êtes-vous sûr de vouloir supprimer cette réservation ?")) {
-            setBookings(prev => prev.filter(b => b.id !== bookingId));
-            showToast({ type: "success", title: "Supprimé", description: "La réservation a été supprimée" });
+            try {
+                const response = await fetch(`/api/bookings/${bookingId}`, {
+                    method: "DELETE",
+                    credentials: 'include',
+                });
+
+                if (response.ok) {
+                    setBookings(prev => prev.filter(b => b.id !== bookingId));
+                    showToast({ type: "success", title: "Supprimé", description: "La réservation a été supprimée" });
+                } else {
+                    showToast({ type: "error", title: "Erreur", description: "Impossible de supprimer" });
+                }
+            } catch (error) {
+                console.error("Error deleting booking:", error);
+                showToast({ type: "error", title: "Erreur", description: "Erreur réseau" });
+            }
         }
     };
 
@@ -149,7 +174,7 @@ export default function AdminBookingsPage() {
 
                 <div className="flex gap-3">
                     <button
-                        onClick={() => setLoading(true)}
+                        onClick={() => fetchBookings()}
                         className="btn-secondary flex items-center gap-2"
                     >
                         <RefreshCw className="w-4 h-4" />
@@ -205,10 +230,10 @@ export default function AdminBookingsPage() {
                         {["all", "pending", "confirmed", "cancelled", "completed"].map((status) => (
                             <button
                                 key={status}
-                                onClick={() => setStatusFilter(status)}
+                                onClick={() => { setStatusFilter(status); setCurrentPage(1); }}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${statusFilter === status
-                                        ? "bg-accent text-white"
-                                        : "bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-700"
+                                    ? "bg-accent text-white"
+                                    : "bg-primary-100 dark:bg-primary-800 text-primary-700 dark:text-primary-300 hover:bg-primary-200 dark:hover:bg-primary-700"
                                     }`}
                             >
                                 {status === "all" ? "Tous" : statusConfig[status as keyof typeof statusConfig].label}
@@ -341,6 +366,93 @@ export default function AdminBookingsPage() {
                     </table>
                 </div>
             </div>
+
+            {/* Pagination Bar */}
+            {totalItems > 0 && (
+                <div className="bg-white dark:bg-primary-900 rounded-xl p-4 shadow-sm border border-primary-100 dark:border-primary-800">
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                        {/* Results summary */}
+                        <div className="text-sm text-primary-600 dark:text-primary-400">
+                            Affichage de{' '}
+                            <span className="font-semibold text-primary-900 dark:text-white">
+                                {Math.min((currentPage - 1) * itemsPerPage + 1, totalItems)}
+                            </span>
+                            {' '}à{' '}
+                            <span className="font-semibold text-primary-900 dark:text-white">
+                                {Math.min(currentPage * itemsPerPage, totalItems)}
+                            </span>
+                            {' '}sur{' '}
+                            <span className="font-semibold text-primary-900 dark:text-white">
+                                {totalItems}
+                            </span>
+                            {' '}résultats
+                        </div>
+
+                        {/* Controls */}
+                        <div className="flex items-center gap-4">
+                            {/* Items per page selector */}
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm text-primary-600 dark:text-primary-400">Par page :</span>
+                                <select
+                                    value={itemsPerPage}
+                                    onChange={(e) => {
+                                        setItemsPerPage(Number(e.target.value));
+                                        setCurrentPage(1); // Reset to first page
+                                    }}
+                                    className="bg-white dark:bg-primary-800 border border-primary-200 dark:border-primary-700 rounded-lg px-2 py-1.5 text-sm focus:ring-2 focus:ring-accent focus:outline-none"
+                                >
+                                    {ITEMS_PER_PAGE_OPTIONS.map(opt => (
+                                        <option key={opt} value={opt}>{opt}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            {/* Page navigation */}
+                            <div className="flex items-center gap-1">
+                                <button
+                                    onClick={() => setCurrentPage(1)}
+                                    disabled={currentPage === 1}
+                                    className="p-2 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                    title="Première page"
+                                >
+                                    <ChevronLeft className="w-4 h-4" />
+                                    <ChevronLeft className="w-4 h-4 -ml-3" />
+                                </button>
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                    disabled={currentPage === 1}
+                                    className="p-2 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                    title="Page précédente"
+                                >
+                                    <ChevronLeft className="w-4 h-4" />
+                                </button>
+
+                                <span className="px-4 py-1.5 text-sm font-medium">
+                                    {currentPage} / {totalPages}
+                                </span>
+
+                                <button
+                                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={currentPage === totalPages}
+                                    className="p-2 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                    title="Page suivante"
+                                >
+                                    <ChevronRight className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={() => setCurrentPage(totalPages)}
+                                    disabled={currentPage === totalPages}
+                                    className="p-2 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-800 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                                    title="Dernière page"
+                                >
+                                    <ChevronRight className="w-4 h-4" />
+                                    <ChevronRight className="w-4 h-4 -ml-3" />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Detail Modal */}
             <AnimatePresence>
