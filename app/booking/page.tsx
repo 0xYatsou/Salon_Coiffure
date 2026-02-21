@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Calendar as CalendarIcon, Clock, User, Phone, Mail, Check, AlertCircle, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, User, Phone, Mail, Check, AlertCircle, Loader2, ChevronLeft, ChevronRight, LogIn, UserPlus } from "lucide-react";
 import { addMonths, subMonths } from "date-fns";
 import { showToast } from "@/lib/toast";
 import {
@@ -14,6 +14,13 @@ import {
     formatMonthYear,
     isWithinBusinessHours
 } from "@/lib/calendar";
+
+interface ClientProfile {
+    id: string;
+    name: string;
+    email: string | null;
+    phone: string;
+}
 
 interface Service {
     id: string;
@@ -47,6 +54,22 @@ export default function BookingPage() {
     const [success, setSuccess] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [calendarDays, setCalendarDays] = useState<DayInfo[]>([]);
+    const [clientProfile, setClientProfile] = useState<ClientProfile | null>(null);
+
+    // Vérifier si le client est connecté
+    useEffect(() => {
+        fetch('/api/client/me', { credentials: 'include' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.client) {
+                    setClientProfile(data.client);
+                    setClientName(data.client.name);
+                    setClientPhone(data.client.phone);
+                    setClientEmail(data.client.email || '');
+                }
+            })
+            .catch(() => { }); // Silently fail for guests
+    }, []);
 
     // Charger les services
     useEffect(() => {
@@ -473,6 +496,51 @@ export default function BookingPage() {
                                 ← Retour
                             </button>
                             <h2 className="font-serif text-2xl font-bold mb-6">Vos informations</h2>
+
+                            {/* Client connecté : banner de bienvenue */}
+                            {clientProfile && (
+                                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 mb-6 flex items-center gap-3">
+                                    <div className="w-10 h-10 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <Check className="w-5 h-5 text-green-600" />
+                                    </div>
+                                    <div>
+                                        <p className="font-semibold text-green-800 dark:text-green-300">
+                                            Bonjour {clientProfile.name} !
+                                        </p>
+                                        <p className="text-sm text-green-600 dark:text-green-400">
+                                            Vos informations ont été pré-remplies automatiquement.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Client non connecté : proposition de créer un compte */}
+                            {!clientProfile && (
+                                <div className="bg-primary-50 dark:bg-primary-800/50 border border-primary-200 dark:border-primary-700 rounded-xl p-4 mb-6">
+                                    <p className="text-sm text-primary-700 dark:text-primary-300 mb-3">
+                                        Vous avez un compte ? Connectez-vous pour pré-remplir vos informations.
+                                    </p>
+                                    <div className="flex gap-3">
+                                        <a
+                                            href="/client/login?redirect=/booking"
+                                            className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-white dark:bg-primary-700 border border-primary-300 dark:border-primary-600 rounded-lg hover:bg-primary-100 dark:hover:bg-primary-600 transition-colors"
+                                        >
+                                            <LogIn className="w-4 h-4" />
+                                            Se connecter
+                                        </a>
+                                        <a
+                                            href="/client/register?redirect=/booking"
+                                            className="flex items-center gap-2 px-4 py-2 text-sm font-medium bg-accent text-white rounded-lg hover:bg-accent/90 transition-colors"
+                                        >
+                                            <UserPlus className="w-4 h-4" />
+                                            Créer un compte
+                                        </a>
+                                    </div>
+                                    <p className="text-xs text-primary-500 dark:text-primary-400 mt-3">
+                                        Ou continuez en tant qu’invité en remplissant le formulaire ci-dessous.
+                                    </p>
+                                </div>
+                            )}
 
                             <div className="space-y-4 mb-6">
                                 <div>
